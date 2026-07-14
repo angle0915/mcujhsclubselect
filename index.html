@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Club Sign-Up</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        :root {
+            --primary-color: #5c247c;
+            --primary-color-hover: #471d5e;
+            --primary-color-focus: #8534ac;
+            --bg-light: #f6f4fa;
+            --accent-gold: #f2a900;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-light);
+            background-image: radial-gradient(at 0% 0%, rgba(92, 36, 124, 0.05) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(242, 169, 0, 0.05) 0px, transparent 50%);
+            min-height: 100vh;
+        }
+        .custom-shadow {
+            box-shadow: 0 10px 30px -5px rgba(92, 36, 124, 0.08), 0 5px 15px -3px rgba(0, 0, 0, 0.03);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(15, 10, 25, 0.4);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .toast-show {
+            animation: slideUp 0.3s forwards, fadeOut 0.3s delay 2.7s forwards;
+        }
+        @keyframes slideUp {
+            from { transform: translate(-50%, 20px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .club-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .club-card:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -6px rgba(92, 36, 124, 0.15);
+        }
+        .club-card.selected {
+            border-color: var(--primary-color);
+            background-color: #fcf9ff;
+            box-shadow: 0 0 0 4px rgba(92, 36, 124, 0.15);
+        }
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            font-weight: 600;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 md:p-8">
+
+    <!-- Client Side Container -->
+    <div class="w-full max-w-3xl bg-white rounded-3xl custom-shadow p-6 md:p-10 border border-purple-50/50 relative overflow-hidden">
+        <!-- Top accent banner -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[var(--primary-color)] via-purple-500 to-[var(--accent-gold)]"></div>
+        
+        <div class="text-center mb-8 mt-2">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-[var(--primary-color)] tracking-tight">MCU Club Enrollment</h1>
+            <p class="text-gray-500 mt-2 font-medium">Secure your spot in your favorite extracurricular program</p>
+        </div>
+
+        <form id="signup-form" class="space-y-8">
+            <!-- Step 1 Indicator -->
+            <div>
+                <div class="flex items-center space-x-3 mb-4">
+                    <span class="flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 text-[var(--primary-color)] font-bold text-sm">1</span>
+                    <h2 class="text-lg font-bold text-gray-800">Student Profile</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                    <div>
+                        <label for="grade-select" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Grade Level</label>
+                        <select id="grade-select" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] p-3 border bg-white font-medium text-gray-700 transition" required>
+                            <option value="" disabled selected>-- Select Grade --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="section-select" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Section</label>
+                        <select id="section-select" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] p-3 border bg-white font-medium text-gray-700 transition disabled:opacity-60 disabled:bg-gray-100" disabled required>
+                            <option value="" disabled selected>-- Select Section --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Message Banner -->
+            <div id="schedule-lock-banner" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start space-x-3">
+                <svg class="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H8m13-7a9 9 0 11-18 0 9 9 0 0118 0zM12 9a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                <div>
+                    <h4 class="font-bold text-amber-900 text-sm">Registration Currently Locked</h4>
+                    <p id="schedule-lock-text" class="text-xs text-amber-700 mt-1"></p>
+                </div>
+            </div>
+
+            <!-- Step 2 Name Details -->
+            <div id="personal-details-section" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div>
+                        <label for="last-name" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Last Name</label>
+                        <input type="text" id="last-name" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] p-3 border font-medium text-gray-700 transition placeholder-gray-400" placeholder="e.g., Cruz" required>
+                    </div>
+                    <div>
+                        <label for="first-name" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">First Name</label>
+                        <input type="text" id="first-name" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] p-3 border font-medium text-gray-700 transition placeholder-gray-400" placeholder="e.g., Juan" required>
+                    </div>
+                    <div>
+                        <label for="middle-initial" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Middle Initial</label>
+                        <input type="text" id="middle-initial" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] p-3 border font-medium text-gray-700 transition placeholder-gray-400" placeholder="e.g., A">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 3 Club Enrollment -->
+            <div id="club-selection-section">
+                <div class="flex items-center space-x-3 mb-4">
+                    <span class="flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 text-[var(--primary-color)] font-bold text-sm">2</span>
+                    <h2 class="text-lg font-bold text-gray-800">Select an Extracurricular Club</h2>
+                </div>
+                
+                <div id="club-buttons-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic Club Cards Render Here -->
+                </div>
+            </div>
+            <input type="hidden" id="selected-club-id" required>
+
+            <button type="submit" id="submit-btn" class="w-full bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex justify-center items-center space-x-2 focus:ring-2 focus:ring-offset-2 focus:ring-[var(--primary-color-focus)]">
+                <span>Complete Registration</span>
+            </button>
+        </form>
+
+        <div class="mt-10 border-t border-gray-100 pt-6 text-center">
+            <button id="admin-login-btn" class="inline-flex items-center space-x-2 text-[var(--primary-color)] hover:text-[var(--primary-color-hover)] font-semibold text-sm transition bg-purple-50 hover:bg-purple-100 px-4 py-2 rounded-full">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H8m13-7a9 9 0 11-18 0 9 9 0 0118 0zM12 9a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                <span>Administrative Console</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Admin Modal Panel -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content w-full max-w-6xl mx-4 relative overflow-hidden bg-white rounded-3xl custom-shadow flex flex-col my-8">
+            <div class="p-6 md:p-8 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-[var(--primary-color)] to-purple-800 text-white">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight">Administrative Console</h2>
+                    <p class="text-purple-200 text-xs mt-1">Configure slot limits, schedules, structure, and check submissions</p>
+                </div>
+                <button id="close-admin-modal-btn" class="p-2 rounded-full hover:bg-white/10 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="admin-login-form" class="p-8 max-w-md mx-auto space-y-4 w-full">
+                <div class="text-center mb-6">
+                    <span class="inline-flex p-3 rounded-2xl bg-purple-50 text-[var(--primary-color)] mb-3">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H8m13-7a9 9 0 11-18 0 9 9 0 0118 0zM12 9a3 3 0 100-6 3 3 0 000 6z"></path></svg>
+                    </span>
+                    <h3 class="text-xl font-bold text-gray-800">Protected Administrator Portal</h3>
+                    <p class="text-xs text-gray-500 mt-1">Provide credential passphrase to access administrative dashboard controls</p>
+                </div>
+                <div>
+                    <label for="admin-password" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Passphrase Key</label>
+                    <input type="password" id="admin-password" class="block w-full rounded-xl border-gray-200 shadow-sm p-3 border focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" required>
+                </div>
+                <button type="submit" class="w-full py-3 px-4 rounded-xl text-sm font-semibold text-white bg-purple-700 hover:bg-purple-800 transition shadow-md hover:shadow-lg">
+                    Authorize Access
+                </button>
+            </form>
+
+            <!-- Dashboard Content Panels (Hidden until authorized) -->
+            <div id="admin-panel-content" class="hidden flex flex-col md:flex-row min-h-[500px]">
+                
+                <!-- Left Nav Tabs -->
+                <div class="w-full md:w-64 bg-gray-50 border-r border-gray-100 p-4 flex flex-col space-y-1">
+                    <button class="tab-btn active text-left px-4 py-3 rounded-xl text-sm font-medium hover:bg-purple-50 hover:text-[var(--primary-color)] flex items-center space-x-3 transition" data-target="tab-submissions">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Enrolled Records</span>
+                    </button>
+                    <button class="tab-btn text-left px-4 py-3 rounded-xl text-sm font-medium hover:bg-purple-50 hover:text-[var(--primary-color)] flex items-center space-x-3 transition" data-target="tab-clubs">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        <span>Club Capacity Rules</span>
+                    </button>
+                    <button class="tab-btn text-left px-4 py-3 rounded-xl text-sm font-medium hover:bg-purple-50 hover:text-[var(--primary-color)] flex items-center space-x-3 transition" data-target="tab-schedule">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Timing Schedules</span>
+                    </button>
+                    <button class="tab-btn text-left px-4 py-3 rounded-xl text-sm font-medium hover:bg-purple-50 hover:text-[var(--primary-color)] flex items-center space-x-3 transition" data-target="tab-structure">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        <span>Academics Structure</span>
+                    </button>
+                </div>
+
+                <!-- Right Panes -->
+                <div class="flex-grow p-6 md:p-8 bg-white max-h-[600px] overflow-y-auto">
+                    
+                    <!-- Pane 1: Submitted Registrations -->
+                    <div id="tab-submissions" class="space-y-6">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">Enrollment Database</h3>
+                                <p class="text-gray-500 text-xs">Verify current sign-up reports, check chronological duplicates, and execute bulk exports</p>
+                            </div>
+                            <button id="export-csv-btn" class="inline-flex items-center space-x-2 py-2 px-4 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <span>Export (CSV)</span>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-purple-50 border border-purple-100 rounded-2xl p-4">
+                                <span class="text-xs font-bold uppercase tracking-wider text-purple-600">Total Enrolled</span>
+                                <p id="stats-total-enrolled" class="text-3xl font-extrabold text-purple-900 mt-1">0</p>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+                                <span class="text-xs font-bold uppercase tracking-wider text-amber-600">Potential Duplicates</span>
+                                <p id="stats-duplicates" class="text-3xl font-extrabold text-amber-900 mt-1">0</p>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+                                <span class="text-xs font-bold uppercase tracking-wider text-blue-600">Available Clubs</span>
+                                <p id="stats-clubs" class="text-3xl font-extrabold text-blue-900 mt-1">0</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                            <label for="search-student" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">Query Database</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                </span>
+                                <input type="text" id="search-student" class="block w-full pl-10 pr-4 py-2.5 rounded-xl border-gray-200 shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] border" placeholder="Search by student last or first name...">
+                            </div>
+                        </div>
+
+                        <div id="submitted-reports-container" class="space-y-3">
+                            <p class="text-gray-500 text-sm text-center py-10">Loading student records...</p>
+                        </div>
+                    </div>
+
+                    <!-- Pane 2: Manage Clubs & Capacities -->
+                    <div id="tab-clubs" class="space-y-6 hidden">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Club & Slot Controls</h3>
+                            <p class="text-gray-500 text-xs">Define capacities dynamically per Grade Level or specific Classroom Sections</p>
+                        </div>
+
+                        <!-- Basis configuration Toggle -->
+                        <div class="bg-purple-50 p-5 rounded-2xl border border-purple-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h4 class="font-bold text-purple-900 text-sm">Slot Allocation Basis</h4>
+                                <p class="text-purple-700 text-xs mt-1">Switching dynamic settings changes capacity target schemas globally</p>
+                            </div>
+                            <div class="flex items-center space-x-4 bg-white p-2 rounded-xl border border-purple-100 self-start sm:self-auto">
+                                <label class="inline-flex items-center cursor-pointer px-3 py-1.5 rounded-lg transition" id="basis-grade-label">
+                                    <input type="radio" name="slot-basis" value="grade" class="hidden" checked>
+                                    <span class="text-xs font-bold">BY GRADE</span>
+                                </label>
+                                <label class="inline-flex items-center cursor-pointer px-3 py-1.5 rounded-lg transition" id="basis-section-label">
+                                    <input type="radio" name="slot-basis" value="section" class="hidden">
+                                    <span class="text-xs font-bold">BY SECTION</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <form id="add-club-form" class="space-y-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                            <h4 class="font-bold text-gray-800 text-sm mb-2" id="add-club-form-title">Create New Extracurricular Club</h4>
+                            <div>
+                                <label for="new-club-name" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Club Label Name</label>
+                                <input type="text" id="new-club-name" class="block w-full rounded-xl border-gray-200 shadow-sm p-3 border focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)]" placeholder="e.g., Chess Guild" required>
+                            </div>
+                            
+                            <!-- Dynamic capacity injection container -->
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wider text-gray-600 mb-3" id="capacity-targets-title">Target Capacities Setting</p>
+                                <div id="grade-targets-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <!-- Populated dynamically based on slotBasis -->
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-2 pt-2">
+                                <button type="submit" class="flex-grow bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] text-white font-semibold py-3 px-4 rounded-xl text-sm transition shadow-sm">
+                                    Apply Configuration
+                                </button>
+                                <button type="button" id="reset-club-form-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-xl text-sm transition">
+                                    Reset
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="border-t border-gray-100 pt-4">
+                            <h4 class="font-bold text-gray-800 text-sm mb-3">Existing Clubs Configuration</h4>
+                            <div id="admin-club-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-2">
+                                <!-- Existing clubs list populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pane 3: Timing and Schedules -->
+                    <div id="tab-schedule" class="space-y-6 hidden">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Grade Level Accessibility Scheduler</h3>
+                            <p class="text-gray-500 text-xs">Set specific release schedules and deadlines for each academic year level</p>
+                        </div>
+
+                        <form id="schedule-config-form" class="space-y-5">
+                            <div id="schedule-inputs-container" class="space-y-5">
+                                <!-- Populated dynamically based on gradeLevels -->
+                            </div>
+                            <button type="submit" class="w-full bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] text-white font-semibold py-3 px-4 rounded-xl text-sm transition shadow-md">
+                                Save Schedules Configuration
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Pane 4: Grade and Section Structure -->
+                    <div id="tab-structure" class="space-y-6 hidden">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">Academics Structure Setup</h3>
+                            <p class="text-gray-500 text-xs">Maintain current grade pathways and classroom sections dynamically</p>
+                        </div>
+
+                        <div id="grades-and-sections-container" class="space-y-4">
+                            <!-- Injected dynamically -->
+                        </div>
+
+                        <form id="add-grade-form" class="mt-4 flex gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                            <input type="text" id="new-grade-name" placeholder="Add Grade Pathway (e.g., Grade 7)" class="flex-grow p-3 border rounded-xl text-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] bg-white" required>
+                            <button type="submit" class="bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] text-white font-semibold px-5 py-3 rounded-xl text-sm transition">
+                                Add Grade
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Edit Submission Modal -->
+    <div id="edit-submission-modal" class="modal">
+        <div class="modal-content w-full max-w-lg mx-4 p-6 md:p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Adjust Enrollment</h2>
+            <div id="edit-student-info" class="text-left mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-1"></div>
+            <form id="edit-club-form" class="space-y-4">
+                <div>
+                    <label for="edit-club-select" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1">Select New Club Target</label>
+                    <select id="edit-club-select" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] p-3 border bg-white text-gray-700 font-medium" required>
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] text-white font-semibold py-3 px-4 rounded-xl transition shadow-md">
+                    Update Records
+                </button>
+            </form>
+            <button id="close-edit-modal-btn" class="mt-4 w-full text-center text-sm font-semibold text-gray-500 hover:text-gray-700 py-2">
+                Cancel
+            </button>
+        </div>
+    </div>
+    
+    <!-- Confirm Submission Modal -->
+    <div id="confirmation-modal" class="modal">
+        <div class="modal-content w-full max-w-md mx-4 p-6 md:p-8 text-center">
+            <span class="inline-flex p-3 rounded-full bg-purple-50 text-[var(--primary-color)] mb-4">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </span>
+            <h2 class="text-2xl font-extrabold text-gray-800 mb-2">Verify Details</h2>
+            <p class="text-gray-500 text-sm mb-6">Confirm and finalize registration choices before secure submittal</p>
+            <div id="confirmation-details" class="text-left bg-purple-50/50 p-5 rounded-2xl border border-purple-100/50 space-y-3 text-sm text-gray-700 mb-6">
+                <!-- details inserted dynamically -->
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="cancel-confirm-btn" class="py-3 px-4 rounded-xl font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                    Modify Details
+                </button>
+                <button id="confirm-submit-btn" class="bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] text-white font-semibold py-3 px-4 rounded-xl transition shadow-md">
+                    Submit Enrollment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Messaging Modal -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content w-full max-w-md mx-4 p-6 md:p-8 text-center">
+            <h2 id="message-title" class="text-2xl font-extrabold text-gray-800 mb-3"></h2>
+            <p id="message-text" class="text-gray-600 text-sm mb-6 leading-relaxed"></p>
+            <button id="close-message-modal-btn" class="w-full bg-[var(--primary-color)] hover:bg-[var(--primary-color-hover)] text-white font-semibold py-3 px-4 rounded-xl transition shadow-md">
+                Acknowledge
+            </button>
+        </div>
+    </div>
+    
+    <!-- Dynamic Custom Toast Alerts -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000] px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3 text-sm font-semibold opacity-0 invisible transition-all duration-300">
+        <div id="toast-icon"></div>
+        <div id="toast-message"></div>
+    </div>
+
+    <!-- Loading Spinner Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[2000] hidden flex items-center justify-center">
+        <div class="bg-white p-5 rounded-2xl shadow-xl flex flex-col items-center space-y-3">
+            <svg class="animate-spin h-10 w-10 text-[var(--primary-color)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-xs font-bold text-gray-700 tracking-wider">Contacting Cloud Database...</span>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, onSnapshot, setDoc, runTransaction, getDocs, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDByZYeKhZKzBFuf3z9z0NxEGWbajPRcps",
+            authDomain: "mcujhsclub.firebaseapp.com",
+            projectId: "mcujhsclub",
+            storageBucket: "mcujhsclub.firebasestorage.app",
+            messagingSenderId: "1081224585927",
+            appId: "1:1081224585927:web:59b79cd4523c168c4a14e2",
+            measurementId: "G-CWL7LTPHVZ"
+        };
+        
+        let db, auth, userId;
+        const appId = firebaseConfig.appId;
+
+        // --- Core Application States ---
+        let gradeLevels = [];
+        let sectionsByGrade = {};
+        let slotBasis = 'grade'; // Default: 'grade' or 'section'
+        let scheduleData = {};
+        let clubsData = {};
+        let submissionsData = {};
+        let activeAdminTab = 'tab-submissions';
+
+        async function initializeFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                await signInAnonymously(auth);
+                userId = auth.currentUser.uid;
+                console.log("Firebase initialized. Secure session linked:", userId);
+
+                // --- Start Listeners ---
+                setupConfigurationListener();
+                setupSettingsListener();
+                setupSchedulesListener();
+                setupClubListener();
+                setupSubmissionsListener();
+
+                // --- Setup Global Events ---
+                setupEventListeners();
+            } catch (e) {
+                console.error("Firebase init failure:", e);
+                showMessageModal("Connection Error", "Failed to communicate with MCU Cloud services. Retrying in a few moments.");
+            }
+        }
+
+        // --- DOM Selectors ---
+        const signupForm = document.getElementById('signup-form');
+        const lastNameInput = document.getElementById('last-name');
+        const firstNameInput = document.getElementById('first-name');
+        const middleInitialInput = document.getElementById('middle-initial');
+        const gradeSelect = document.getElementById('grade-select');
+        const sectionSelect = document.getElementById('section-select');
+        const clubButtonsContainer = document.getElementById('club-buttons-container');
+        const selectedClubIdInput = document.getElementById('selected-club-id');
+        const submitBtn = document.getElementById('submit-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        
+        const adminLoginBtn = document.getElementById('admin-login-btn');
+        const adminModal = document.getElementById('admin-modal');
+        const closeAdminModalBtn = document.getElementById('close-admin-modal-btn');
+        const adminLoginForm = document.getElementById('admin-login-form');
+        const adminPanelContent = document.getElementById('admin-panel-content');
+        const addClubForm = document.getElementById('add-club-form');
+        const adminClubListDiv = document.getElementById('admin-club-list');
+        const gradeTargetsContainer = document.getElementById('grade-targets-container');
+        const gradesAndSectionsContainer = document.getElementById('grades-and-sections-container');
+        const addGradeForm = document.getElementById('add-grade-form');
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        const submittedReportsContainer = document.getElementById('submitted-reports-container');
+        const searchStudentInput = document.getElementById('search-student');
+
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const confirmationDetails = document.getElementById('confirmation-details');
+        const cancelConfirmBtn = document.getElementById('cancel-confirm-btn');
+        const confirmSubmitBtn = document.getElementById('confirm-submit-btn');
+
+        const messageModal = document.getElementById('message-modal');
+        const messageTitle = document.getElementById('message-title');
+        const messageText = document.getElementById('message-text');
+        const closeMessageModalBtn = document.getElementById('close-message-modal-btn');
+        
+        const editSubmissionModal = document.getElementById('edit-submission-modal');
+        const closeEditModalBtn = document.getElementById('close-edit-modal-btn');
+        const editStudentInfoDiv = document.getElementById('edit-student-info');
+        const editClubSelect = document.getElementById('edit-club-select');
+        const editClubForm = document.getElementById('edit-club-form');
+        const scheduleConfigForm = document.getElementById('schedule-config-form');
+        const scheduleInputsContainer = document.getElementById('schedule-inputs-container');
+        let currentSubmissionToEdit = null;
+
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        const toastIcon = document.getElementById('toast-icon');
+
+        // --- UI Feedback Auxiliaries ---
+        function showMessageModal(title, message) {
+            messageTitle.textContent = title;
+            messageText.textContent = message;
+            messageModal.style.display = 'flex';
+        }
+
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            if (type === 'success') {
+                toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000] px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3 text-sm font-semibold text-white bg-emerald-600";
+                toastIcon.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+            } else {
+                toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000] px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3 text-sm font-semibold text-white bg-rose-600";
+                toastIcon.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+            }
+            toast.style.visibility = 'visible';
+            toast.style.opacity = '1';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.visibility = 'hidden';
+            }, 3000);
+        }
+
+        function toggleLoading(show) {
+            loadingOverlay.style.display = show ? 'flex' : 'none';
+        }
+        
+        function sanitizeString(str) {
+            return str.replace(/[^a-zA-Z0-9\s-]/g, '').toLowerCase().trim().replace(/\s+/g, '-');
+        }
+
+        // --- Core Sign-up Mechanics & Verification Checks ---
+        function checkGradeAccessibility(grade) {
+            if (!grade) return { isOpen: true };
+            const config = scheduleData[grade];
+            if (!config) return { isOpen: true };
+
+            const now = new Date();
+            if (config.start) {
+                const startTime = new Date(config.start);
+                if (now < startTime) {
+                    return {
+                        isOpen: false,
+                        reason: `Release scheduled for: ${startTime.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`
+                    };
+                }
+            }
+
+            if (config.hasEnd && config.end) {
+                const endTime = new Date(config.end);
+                if (now > endTime) {
+                    return {
+                        isOpen: false,
+                        reason: `Enrollment closed on: ${endTime.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`
+                    };
+                }
+            }
+
+            return { isOpen: true };
+        }
+
+        function populateSections() {
+            const selectedGrade = gradeSelect.value;
+            sectionSelect.innerHTML = '<option value="" disabled selected>-- Select Section --</option>';
+            sectionSelect.disabled = true;
+
+            const scheduleCheck = checkGradeAccessibility(selectedGrade);
+            const banner = document.getElementById('schedule-lock-banner');
+            const lockText = document.getElementById('schedule-lock-text');
+
+            if (!scheduleCheck.isOpen) {
+                lockText.textContent = scheduleCheck.reason;
+                banner.classList.remove('hidden');
+                clubButtonsContainer.innerHTML = '<div class="col-span-full text-center text-sm font-semibold text-gray-400 py-6">Please select an accessible grade pathway</div>';
+                selectedClubIdInput.value = '';
+                return;
+            } else {
+                banner.classList.add('hidden');
+            }
+
+            if (sectionsByGrade[selectedGrade] && sectionsByGrade[selectedGrade].length > 0) {
+                sectionsByGrade[selectedGrade].forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section;
+                    option.textContent = section;
+                    sectionSelect.appendChild(option);
+                });
+                sectionSelect.disabled = false;
+            }
+        }
+        
+        function renderClubButtons() {
+            clubButtonsContainer.innerHTML = '';
+            
+            const selectedGrade = gradeSelect.value;
+            const selectedSection = sectionSelect.value;
+            
+            if (!selectedGrade) {
+                clubButtonsContainer.innerHTML = '<div class="col-span-full text-center text-sm font-semibold text-gray-400 py-6">Please choose your Grade Level first</div>';
+                return;
+            }
+            if (slotBasis === 'section' && !selectedSection) {
+                clubButtonsContainer.innerHTML = '<div class="col-span-full text-center text-sm font-semibold text-gray-400 py-6">Classroom section context required to fetch remaining club slots</div>';
+                return;
+            }
+            
+            const clubs = Object.values(clubsData).sort((a, b) => a.name.localeCompare(b.name));
+
+            if (clubs.length === 0) {
+                clubButtonsContainer.innerHTML = '<div class="col-span-full text-center text-sm font-semibold text-gray-400 py-6">No clubs configured at this time</div>';
+                return;
+            }
+
+            clubs.forEach(club => {
+                const clubId = sanitizeString(club.name);
+                let target = 0;
+                let count = 0;
+
+                if (slotBasis === 'grade') {
+                    const gradeInfo = club.grades?.[selectedGrade];
+                    target = gradeInfo ? parseInt(gradeInfo.target) : 0;
+                    count = gradeInfo ? parseInt(gradeInfo.count) : 0;
+                } else if (slotBasis === 'section') {
+                    const secKey = `${selectedGrade}_${selectedSection}`;
+                    const secInfo = club.sections?.[secKey];
+                    target = secInfo ? parseInt(secInfo.target) : 0;
+                    count = secInfo ? parseInt(secInfo.count) : 0;
+                }
+
+                const remainingSlots = Math.max(0, target - count);
+                const isFull = remainingSlots <= 0;
+                const isConfigured = target > 0;
+                const progressPercent = target > 0 ? (count / target) * 100 : 100;
+                
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'club-card w-full p-5 border border-gray-200 rounded-2xl shadow-sm text-left flex flex-col justify-between h-40 relative overflow-hidden bg-white';
+                
+                let progressColorClass = 'bg-emerald-500';
+                if (progressPercent >= 90) progressColorClass = 'bg-rose-500';
+                else if (progressPercent >= 65) progressColorClass = 'bg-amber-500';
+
+                button.innerHTML = `
+                    <div class="z-10">
+                        <span class="block text-lg font-bold text-gray-800 leading-tight">${club.name}</span>
+                        <span class="text-xs text-gray-400 font-medium mt-1 inline-block">Basis: ${slotBasis === 'grade' ? 'Grade Target' : 'Section Target'}</span>
+                    </div>
+                    
+                    <div class="w-full z-10">
+                        <div class="flex justify-between items-center text-xs font-bold mb-1.5">
+                            <span class="${isFull ? 'text-rose-600' : 'text-slate-600'}">
+                                ${!isConfigured ? 'Unconfigured' : isFull ? 'Capacity Reached' : `${remainingSlots} spaces open`}
+                            </span>
+                            <span class="text-gray-400">${count}/${target}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="${progressColorClass} h-full rounded-full transition-all duration-300" style="width: ${Math.min(100, progressPercent)}%"></div>
+                        </div>
+                    </div>
+                `;
+                button.dataset.clubId = clubId;
+                
+                if (isFull || !isConfigured) {
+                    button.disabled = true;
+                    button.classList.add('bg-gray-50', 'text-gray-400', 'cursor-not-allowed', 'opacity-65');
+                } else {
+                    button.classList.add('bg-white', 'hover:border-purple-300');
+                    button.addEventListener('click', () => {
+                        selectedClubIdInput.value = clubId;
+                        document.querySelectorAll('.club-card').forEach(btn => btn.classList.remove('selected'));
+                        button.classList.add('selected');
+                    });
+                }
+                
+                clubButtonsContainer.appendChild(button);
+            });
+        }
+
+        // --- Admin Form & Slot Basis Dynamics ---
+        function renderAdminCapacityInputs() {
+            gradeTargetsContainer.innerHTML = '';
+            
+            if (gradeLevels.length === 0) {
+                gradeTargetsContainer.innerHTML = '<p class="text-gray-400 text-xs col-span-full">Configure active grade pathways first</p>';
+                return;
+            }
+
+            if (slotBasis === 'grade') {
+                gradeLevels.forEach(grade => {
+                    const gradeId = sanitizeString(grade);
+                    const div = document.createElement('div');
+                    div.className = "bg-white p-3 rounded-xl border border-gray-100 space-y-1.5 shadow-sm";
+                    div.innerHTML = `
+                        <label for="target-${gradeId}" class="block text-xs font-extrabold text-gray-700">${grade}</label>
+                        <input type="number" id="target-${gradeId}" data-type="grade" data-key="${grade}" class="block w-full rounded-lg border-gray-200 p-2 text-sm border focus:ring-[var(--primary-color)]" placeholder="Capacity count" min="0" value="0" required>
+                    `;
+                    gradeTargetsContainer.appendChild(div);
+                });
+            } else if (slotBasis === 'section') {
+                gradeLevels.forEach(grade => {
+                    const gradeId = sanitizeString(grade);
+                    const sections = sectionsByGrade[grade] || [];
+                    if (sections.length === 0) return;
+
+                    const parentGroup = document.createElement('div');
+                    parentGroup.className = "col-span-full bg-white p-4 rounded-xl border border-gray-100 space-y-3 shadow-sm";
+                    parentGroup.innerHTML = `<h5 class="text-xs font-bold text-[var(--primary-color)] border-b pb-1.5">${grade} Sections</h5>`;
+                    
+                    const subGrid = document.createElement('div');
+                    subGrid.className = "grid grid-cols-2 gap-3";
+                    
+                    sections.forEach(sec => {
+                        const secId = sanitizeString(`${grade}_${sec}`);
+                        const item = document.createElement('div');
+                        item.className = "space-y-1";
+                        item.innerHTML = `
+                            <label for="target-${secId}" class="block text-xs font-extrabold text-gray-600">${sec}</label>
+                            <input type="number" id="target-${secId}" data-type="section" data-grade="${grade}" data-section="${sec}" class="block w-full rounded-lg border-gray-200 p-2 text-xs border focus:ring-[var(--primary-color)]" placeholder="Slots" min="0" value="0" required>
+                        `;
+                        subGrid.appendChild(item);
+                    });
+                    
+                    parentGroup.appendChild(subGrid);
+                    gradeTargetsContainer.appendChild(parentGroup);
+                });
+            }
+        }
+
+        function populateAdminSchedules() {
+            scheduleInputsContainer.innerHTML = '';
+            if (gradeLevels.length === 0) {
+                scheduleInputsContainer.innerHTML = '<p class="text-center text-sm text-gray-500 py-6">Create grade pathways to configure timing settings</p>';
+                return;
+            }
+
+            gradeLevels.forEach(grade => {
+                const gradeKey = grade;
+                const config = scheduleData[gradeKey] || { start: '', hasEnd: false, end: '' };
+                const gradeId = sanitizeString(grade);
+
+                const div = document.createElement('div');
+                div.className = "bg-gray-50 p-4 rounded-2xl border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-4 items-center";
+                div.innerHTML = `
+                    <div>
+                        <span class="block text-sm font-bold text-gray-800">${grade} Access Rules</span>
+                        <p class="text-xs text-gray-500 mt-1">Regulate sign-up open/close timestamps</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Enlistment Release Start</label>
+                        <input type="datetime-local" class="sched-start block w-full rounded-lg border-gray-200 p-2 text-xs border bg-white" data-grade="${gradeKey}" value="${config.start || ''}">
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" class="sched-has-end h-4 w-4 text-[var(--primary-color)] rounded border-gray-300" data-grade="${gradeKey}" id="has-end-${gradeId}" ${config.hasEnd ? 'checked' : ''}>
+                            <label for="has-end-${gradeId}" class="text-xs font-bold uppercase tracking-wider text-gray-500">Enable Hard Deadline</label>
+                        </div>
+                        <input type="datetime-local" class="sched-end block w-full rounded-lg border-gray-200 p-2 text-xs border bg-white disabled:opacity-50" data-grade="${gradeKey}" value="${config.end || ''}" ${config.hasEnd ? '' : 'disabled'}>
+                    </div>
+                `;
+
+                const chk = div.querySelector('.sched-has-end');
+                const endInput = div.querySelector('.sched-end');
+                chk.addEventListener('change', (e) => {
+                    endInput.disabled = !e.target.checked;
+                });
+
+                scheduleInputsContainer.appendChild(div);
+            });
+        }
+        
+        function renderAdminGradesAndSections() {
+            gradesAndSectionsContainer.innerHTML = '';
+            if (gradeLevels.length === 0) {
+                gradesAndSectionsContainer.innerHTML = '<p class="text-center text-sm text-gray-500 py-6">No academic structure pathways defined</p>';
+                return;
+            }
+
+            gradeLevels.forEach(grade => {
+                const gradeId = sanitizeString(grade);
+                const gradeDiv = document.createElement('div');
+                gradeDiv.className = "p-4 border rounded-2xl bg-gray-50 border-gray-100 space-y-3";
+                gradeDiv.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-gray-200/50 pb-2">
+                        <span class="font-bold text-gray-800 text-sm">${grade}</span>
+                        <button type="button" class="remove-grade-btn text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition" data-grade="${grade}">Delete Pathway</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2" id="sections-${gradeId}">
+                        ${(sectionsByGrade[grade] || []).map(section => `
+                            <div class="flex items-center bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs text-gray-700 space-x-1.5 font-medium shadow-sm">
+                                <span>${section}</span>
+                                <button type="button" class="remove-section-btn text-gray-400 hover:text-red-500" data-grade="${grade}" data-section="${section}">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <form class="add-section-form flex gap-2 pt-1.5">
+                        <input type="text" placeholder="Add Section Name" class="flex-grow p-2 border rounded-xl text-xs focus:ring-[var(--primary-color)] bg-white" required>
+                        <button type="submit" class="bg-purple-100 hover:bg-purple-200 text-[var(--primary-color)] font-bold px-4 py-2 rounded-xl text-xs transition">Create Section</button>
+                    </form>
+                `;
+                
+                const removeGradeBtn = gradeDiv.querySelector('.remove-grade-btn');
+                removeGradeBtn.addEventListener('click', handleRemoveGrade);
+
+                gradeDiv.querySelectorAll('.remove-section-btn').forEach(btn => {
+                    btn.addEventListener('click', handleRemoveSection);
+                });
+
+                const addSectionForm = gradeDiv.querySelector('.add-section-form');
+                addSectionForm.addEventListener('submit', handleAddSection);
+
+                gradesAndSectionsContainer.appendChild(gradeDiv);
+            });
+        }
+        
+        function updateAdminStats() {
+            document.getElementById('stats-total-enrolled').textContent = Object.keys(submissionsData).length;
+            document.getElementById('stats-clubs').textContent = Object.keys(clubsData).length;
+
+            const groups = {};
+            let duplicatesCount = 0;
+            Object.values(submissionsData).forEach(sub => {
+                const key = `${sub.lastName}-${sub.firstName}`.toLowerCase().trim();
+                groups[key] = (groups[key] || 0) + 1;
+            });
+            Object.values(groups).forEach(count => {
+                if (count > 1) duplicatesCount += (count - 1);
+            });
+            document.getElementById('stats-duplicates').textContent = duplicatesCount;
+        }
+
+        function renderSubmittedReports() {
+            const searchTerm = searchStudentInput.value.toLowerCase().trim();
+            submittedReportsContainer.innerHTML = '';
+            
+            let allSubmissions = Object.values(submissionsData);
+
+            const entryGroups = new Map();
+            allSubmissions.forEach(sub => {
+                const key = `${sub.lastName}-${sub.firstName}`.toLowerCase().trim();
+                if (!entryGroups.has(key)) {
+                    entryGroups.set(key, []);
+                }
+                entryGroups.get(key).push(sub);
+            });
+
+            const duplicateRankMap = new Map();
+            for (const group of entryGroups.values()) {
+                if (group.length > 1) {
+                    group.sort((a, b) => a.timestamp.seconds - b.timestamp.seconds);
+                    group.forEach((sub, index) => {
+                        duplicateRankMap.set(sub.id, index + 1);
+                    });
+                }
+            }
+
+            let submissionsToRender = allSubmissions;
+
+            if (searchTerm) {
+                submissionsToRender = allSubmissions.filter(submission => {
+                    const fullName = `${submission.firstName} ${submission.lastName}`.toLowerCase();
+                    const lastNameFirst = `${submission.lastName} ${submission.firstName}`.toLowerCase();
+                    return fullName.includes(searchTerm) || lastNameFirst.includes(searchTerm);
+                });
+            }
+
+            if (submissionsToRender.length === 0) {
+                const msg = searchTerm ? `No matches found matching "${searchStudentInput.value}"` : "No enrolled records available";
+                submittedReportsContainer.innerHTML = `<p class="text-gray-400 text-xs text-center py-10 font-semibold">${msg}</p>`;
+                return;
+            }
+
+            const sortedSubmissions = submissionsToRender.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+
+            const getOrdinal = (n) => {
+                const s = ["th", "st", "nd", "rd"];
+                const v = n % 100;
+                return n + (s[(v - 20) % 10] || s[v] || s[0]);
+            };
+
+            sortedSubmissions.forEach(submission => {
+                const clubName = clubsData[submission.clubId]?.name || 'N/A';
+                const submissionId = submission.id;
+                const card = document.createElement('div');
+
+                const rank = duplicateRankMap.get(submissionId);
+                const isDuplicate = !!rank;
+                
+                let cardClass = "p-4 bg-white rounded-2xl border border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition hover:shadow-sm";
+                if (isDuplicate) {
+                    cardClass += " bg-amber-50/40 border-amber-200/65";
+                }
+                card.className = cardClass;
+
+                const duplicateBadge = isDuplicate && rank > 1
+                    ? `<span class="text-xs font-extrabold uppercase text-amber-800 bg-amber-200/60 border border-amber-300 px-2 py-0.5 rounded-full ml-2 inline-flex items-center">Duplicate (${getOrdinal(rank)} submit)</span>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center flex-wrap gap-1">
+                            <span class="font-bold text-gray-800">${submission.firstName} ${submission.middleInitial ? submission.middleInitial + '.' : ''} ${submission.lastName}</span>
+                            ${duplicateBadge}
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs font-semibold text-gray-500">
+                            <span>${submission.grade}</span>
+                            <span class="w-1 h-1 rounded-full bg-gray-300"></span>
+                            <span>${submission.section}</span>
+                        </div>
+                        <p class="text-xs text-[var(--primary-color)] font-bold">Allocated: ${clubName}</p>
+                    </div>
+                    <div class="flex space-x-2 self-end sm:self-auto pt-2 sm:pt-0">
+                        <button class="edit-submission-btn px-3 py-1.5 bg-purple-50 text-[var(--primary-color)] hover:bg-purple-100 text-xs font-bold rounded-lg transition" data-id="${submissionId}">Change Club</button>
+                        <button class="delete-submission-btn px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold rounded-lg transition" data-id="${submissionId}">Delete</button>
+                    </div>
+                `;
+
+                const editBtn = card.querySelector('.edit-submission-btn');
+                editBtn.addEventListener('click', () => handleEditSubmission(submissionId));
+
+                const deleteBtn = card.querySelector('.delete-submission-btn');
+                deleteBtn.addEventListener('click', () => handleDeleteSubmission(submissionId));
+
+                submittedReportsContainer.appendChild(card);
+            });
+        }
+
+        function renderAdminClubsList() {
+            adminClubListDiv.innerHTML = '';
+            const clubs = Object.values(clubsData).sort((a, b) => a.name.localeCompare(b.name));
+
+            if (clubs.length === 0) {
+                adminClubListDiv.innerHTML = '<p class="text-gray-400 text-xs py-4 text-center col-span-full">Create clubs to configure rules</p>';
+                return;
+            }
+
+            clubs.forEach(club => {
+                const clubId = sanitizeString(club.name);
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-3.5 bg-gray-50 border border-gray-150 rounded-xl";
+                item.innerHTML = `
+                    <div>
+                        <span class="text-sm font-bold text-gray-800">${club.name}</span>
+                        <div class="flex gap-2 text-[10px] font-bold text-gray-500 mt-0.5">
+                            <span>GRADES: ${Object.keys(club.grades || {}).length}</span>
+                            <span>|</span>
+                            <span>SECTIONS: ${Object.keys(club.sections || {}).length}</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-1.5">
+                        <button class="edit-btn text-xs font-bold text-[var(--primary-color)] bg-purple-100 hover:bg-purple-200 px-3 py-1.5 rounded-lg transition">Edit Config</button>
+                        <button class="delete-club-btn text-xs font-bold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition">Delete</button>
+                    </div>
+                `;
+
+                const editBtn = item.querySelector('.edit-btn');
+                editBtn.addEventListener('click', () => {
+                    document.getElementById('new-club-name').value = club.name;
+                    document.getElementById('add-club-form-title').textContent = `Edit Configuration: ${club.name}`;
+                    
+                    if (slotBasis === 'grade') {
+                        gradeLevels.forEach(grade => {
+                            const gradeId = sanitizeString(grade);
+                            const input = document.getElementById(`target-${gradeId}`);
+                            if (input) {
+                                input.value = club.grades?.[grade]?.target || 0;
+                            }
+                        });
+                    } else {
+                        gradeLevels.forEach(grade => {
+                            const sections = sectionsByGrade[grade] || [];
+                            sections.forEach(sec => {
+                                const secKey = `${grade}_${sec}`;
+                                const secId = sanitizeString(secKey);
+                                const input = document.getElementById(`target-${secId}`);
+                                if (input) {
+                                    input.value = club.sections?.[secKey]?.target || 0;
+                                }
+                            });
+                        });
+                    }
+                });
+
+                const deleteClubBtn = item.querySelector('.delete-club-btn');
+                deleteClubBtn.addEventListener('click', () => handleDeleteClub(clubId));
+
+                adminClubListDiv.appendChild(item);
+            });
+        }
+
+        // --- Firestore State Sync Observers ---
+        function setupConfigurationListener() {
+            if (!db) return;
+            const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'grades-and-sections');
+            
+            onSnapshot(configDocRef, (docSnap) => {
+                const config = docSnap.data();
+                if (config) {
+                    gradeLevels = Object.keys(config).filter(k => k !== '_slot_settings' && k !== '_schedules').sort();
+                    sectionsByGrade = {};
+                    gradeLevels.forEach(g => {
+                        sectionsByGrade[g] = config[g];
+                    });
+                } else {
+                    gradeLevels = ["Grade 7", "Grade 8", "Grade 9", "Grade 10"];
+                    sectionsByGrade = {
+                        "Grade 7": ["Section A", "Section B"],
+                        "Grade 8": ["Section C", "Section D"],
+                        "Grade 9": ["Section E", "Section F"],
+                        "Grade 10": ["Section G", "Section H"],
+                    };
+                    setDoc(configDocRef, sectionsByGrade, { merge: true });
+                }
+                
+                renderAdminGradesAndSections();
+                renderAdminCapacityInputs();
+                populateAdminSchedules();
+                
+                const currentSelection = gradeSelect.value;
+                gradeSelect.innerHTML = '<option value="" disabled selected>-- Select Grade --</option>';
+                gradeLevels.forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.textContent = grade;
+                    if (grade === currentSelection) option.selected = true;
+                    gradeSelect.appendChild(option);
+                });
+            }, (error) => {
+                console.error("Config fetch error:", error);
+                showToast("System error syncing grade configurations.", 'error');
+            });
+        }
+
+        function setupSettingsListener() {
+            if (!db) return;
+            const settingsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'settings');
+            onSnapshot(settingsDocRef, (docSnap) => {
+                const data = docSnap.data();
+                if (data && data.slotBasis) {
+                    slotBasis = data.slotBasis;
+                } else {
+                    setDoc(settingsDocRef, { slotBasis: 'grade' }, { merge: true });
+                    slotBasis = 'grade';
+                }
+
+                const activeLabel = slotBasis === 'grade' ? 'basis-grade-label' : 'basis-section-label';
+                const inactiveLabel = slotBasis === 'grade' ? 'basis-section-label' : 'basis-grade-label';
+                
+                document.getElementById(activeLabel).className = "inline-flex items-center cursor-pointer px-3 py-1.5 rounded-lg transition bg-purple-700 text-white shadow-sm";
+                document.getElementById(inactiveLabel).className = "inline-flex items-center cursor-pointer px-3 py-1.5 rounded-lg transition text-gray-500 bg-transparent hover:bg-gray-100";
+                
+                const radio = document.querySelector(`input[name="slot-basis"][value="${slotBasis}"]`);
+                if (radio) radio.checked = true;
+
+                renderAdminCapacityInputs();
+                renderClubButtons();
+            });
+        }
+
+        function setupSchedulesListener() {
+            if (!db) return;
+            const schedDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'schedule');
+            onSnapshot(schedDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    scheduleData = docSnap.data();
+                } else {
+                    scheduleData = {};
+                }
+                populateAdminSchedules();
+                populateSections();
+            });
+        }
+
+        function setupClubListener() {
+            if (!db) return;
+            const clubCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'clubs');
+            
+            onSnapshot(clubCollectionRef, (snapshot) => {
+                const updatedClubs = {};
+                snapshot.forEach(doc => {
+                    updatedClubs[doc.id] = doc.data();
+                });
+                clubsData = updatedClubs;
+                renderClubButtons();
+                renderAdminClubsList();
+                updateAdminStats();
+            }, (error) => {
+                console.error("Error fetching clubs:", error);
+            });
+        }
+
+        function setupSubmissionsListener() {
+            if (!db) return;
+            const submissionsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
+            onSnapshot(submissionsCollectionRef, (snapshot) => {
+                const updatedSubmissions = {};
+                snapshot.forEach(doc => {
+                    updatedSubmissions[doc.id] = { ...doc.data(), id: doc.id };
+                });
+                submissionsData = updatedSubmissions;
+                renderSubmittedReports();
+                updateAdminStats();
+                renderClubButtons();
+            }, (error) => {
+                console.error("Submissions sync error:", error);
+            });
+        }
+        
+        // --- Client Registration Interactions ---
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const selectedGrade = gradeSelect.value;
+            const selectedSection = sectionSelect.value;
+            const selectedClubId = selectedClubIdInput.value;
+            const lastName = lastNameInput.value.trim();
+            const firstName = firstNameInput.value.trim();
+            const middleInitial = middleInitialInput.value.trim();
+
+            if (!selectedClubId || !lastName || !firstName || !selectedGrade || !selectedSection) {
+                showToast("Please fully complete your student profile and select a club.", 'error');
+                return;
+            }
+
+            const scheduleCheck = checkGradeAccessibility(selectedGrade);
+            if (!scheduleCheck.isOpen) {
+                showMessageModal("Access Restricted", `Sign-up paths are closed at this time. Reason: ${scheduleCheck.reason}`);
+                return;
+            }
+
+            const chosenClubName = clubsData[selectedClubId]?.name || 'N/A';
+            confirmationDetails.innerHTML = `
+                <div class="flex justify-between border-b pb-2"><span class="font-semibold text-gray-500">Student Name</span> <span class="font-bold text-gray-900">${firstName} ${middleInitial ? middleInitial + '.' : ''} ${lastName}</span></div>
+                <div class="flex justify-between border-b pb-2"><span class="font-semibold text-gray-500">Path Class</span> <span class="font-bold text-gray-900">${selectedGrade} - ${selectedSection}</span></div>
+                <div class="flex justify-between pt-1"><span class="font-semibold text-gray-500">Enrollment Target</span> <span class="font-extrabold text-[var(--primary-color)] text-base">${chosenClubName}</span></div>
+            `;
+            confirmationModal.style.display = 'flex';
+        }
+        
+        async function handleConfirmSubmit() {
+            confirmationModal.style.display = 'none';
+            toggleLoading(true);
+            submitBtn.disabled = true;
+
+            const selectedGrade = gradeSelect.value;
+            const selectedSection = sectionSelect.value;
+            const selectedClubId = selectedClubIdInput.value;
+            const lastName = lastNameInput.value.trim();
+            const firstName = firstNameInput.value.trim();
+            const middleInitial = middleInitialInput.value.trim();
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const settingsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'settings');
+                    const settingsSnap = await transaction.get(settingsDocRef);
+                    const activeBasis = settingsSnap.exists() ? settingsSnap.data().slotBasis : 'grade';
+
+                    const clubDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'clubs', selectedClubId);
+                    const clubDoc = await transaction.get(clubDocRef);
+
+                    if (!clubDoc.exists()) {
+                        throw new Error("Target club is no longer available.");
+                    }
+
+                    const clubData = clubDoc.data();
+                    
+                    if (activeBasis === 'grade') {
+                        const gradeInfo = clubData.grades?.[selectedGrade];
+                        if (!gradeInfo) throw new Error("This club is currently closed for your Grade pathway.");
+                        if (parseInt(gradeInfo.count) >= parseInt(gradeInfo.target)) {
+                            throw new Error("This club is fully occupied for your Grade pathway.");
+                        }
+                        const newCount = parseInt(gradeInfo.count) + 1;
+                        transaction.update(clubDocRef, { [`grades.${selectedGrade}.count`]: newCount });
+                    } else {
+                        const secKey = `${selectedGrade}_${selectedSection}`;
+                        const secInfo = clubData.sections?.[secKey];
+                        if (!secInfo) throw new Error("No active slots set up for your class section.");
+                        if (parseInt(secInfo.count) >= parseInt(secInfo.target)) {
+                            throw new Error("This club is fully occupied for your classroom section.");
+                        }
+                        const newCount = parseInt(secInfo.count) + 1;
+                        transaction.update(clubDocRef, { [`sections.${secKey}.count`]: newCount });
+                    }
+
+                    const submissionsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
+                    const submissionDocRef = doc(submissionsCollectionRef);
+                    transaction.set(submissionDocRef, {
+                        lastName: lastName,
+                        firstName: firstName,
+                        middleInitial: middleInitial,
+                        grade: selectedGrade,
+                        section: selectedSection,
+                        clubId: selectedClubId,
+                        timestamp: new Date()
+                    });
+                });
+
+                showToast("Enrollment complete! Welcome to your new program.", 'success');
+                signupForm.reset();
+                selectedClubIdInput.value = '';
+                populateSections();
+                document.querySelectorAll('.club-card').forEach(btn => btn.classList.remove('selected'));
+            } catch (error) {
+                console.error("Submission crash:", error);
+                showToast(error.message || "Encountered cloud error during reservation.", 'error');
+            } finally {
+                toggleLoading(false);
+                submitBtn.disabled = false;
+            }
+        }
+        
+        // --- Admin Dashboard Security Logic ---
+        const ADMIN_PASSWORD = "mcujhsadmin1234";
+
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                adminLoginForm.classList.add('hidden');
+                adminPanelContent.classList.remove('hidden');
+                
+                renderAdminGradesAndSections();
+                renderAdminCapacityInputs();
+                populateAdminSchedules();
+                renderSubmittedReports();
+            } else {
+                showMessageModal("Security Alert", "Passphrase provided is unrecognized.");
+            }
+        }
+
+        async function handleSlotBasisChange(event) {
+            const newBasis = event.target.value;
+            toggleLoading(true);
+            try {
+                const settingsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'settings');
+                await setDoc(settingsDocRef, { slotBasis: newBasis }, { merge: true });
+                showToast(`Slot targets shifted to '${newBasis}' basis globally.`, 'success');
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to write slot settings.", 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+        
+        async function handleAddClub(event) {
+            event.preventDefault();
+            toggleLoading(true);
+
+            const clubName = document.getElementById('new-club-name').value.trim();
+            const cleanClubId = sanitizeString(clubName);
+            
+            const gradesPayload = {};
+            const sectionsPayload = {};
+            let isValid = true;
+
+            if (slotBasis === 'grade') {
+                gradeLevels.forEach(grade => {
+                    const gradeId = sanitizeString(grade);
+                    const input = document.getElementById(`target-${gradeId}`);
+                    const target = parseInt(input?.value || 0);
+                    if (isNaN(target) || target < 0) isValid = false;
+                    gradesPayload[grade] = {
+                        target: target,
+                        count: clubsData[cleanClubId]?.grades?.[grade]?.count || 0
+                    };
+                });
+            } else {
+                gradeLevels.forEach(grade => {
+                    const sections = sectionsByGrade[grade] || [];
+                    sections.forEach(sec => {
+                        const secId = sanitizeString(`${grade}_${sec}`);
+                        const input = document.getElementById(`target-${secId}`);
+                        const target = parseInt(input?.value || 0);
+                        if (isNaN(target) || target < 0) isValid = false;
+                        const secKey = `${grade}_${sec}`;
+                        sectionsPayload[secKey] = {
+                            target: target,
+                            count: clubsData[cleanClubId]?.sections?.[secKey]?.count || 0
+                        };
+                    });
+                });
+            }
+
+            if (!clubName || !isValid) {
+                showToast("Ensure positive counts are input across targets.", 'error');
+                toggleLoading(false);
+                return;
+            }
+
+            try {
+                const clubDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'clubs', cleanClubId);
+                const payload = { name: clubName };
+                if (slotBasis === 'grade') {
+                    payload.grades = gradesPayload;
+                } else {
+                    payload.sections = sectionsPayload;
+                }
+                
+                await setDoc(clubDocRef, payload, { merge: true });
+                
+                addClubForm.reset();
+                document.getElementById('add-club-form-title').textContent = "Create New Extracurricular Club";
+                renderAdminCapacityInputs();
+                showToast(`Club "${clubName}" applied successfully.`, 'success');
+            } catch (error) {
+                console.error("Add club failure:", error);
+                showToast("Write exception while creating club profiles.", 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function handleDeleteClub(clubId) {
+            if (!confirm("Caution! Deleting this club will void target counts. Confirm removal?")) return;
+            toggleLoading(true);
+            try {
+                const clubDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'clubs', clubId);
+                await deleteDoc(clubDocRef);
+                showToast("Club program eliminated.", 'success');
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to execute deletion schema.", 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+        
+        async function handleAddGrade(event) {
+            event.preventDefault();
+            const newGradeName = document.getElementById('new-grade-name').value.trim();
+            if (!newGradeName) return;
+
+            const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'grades-and-sections');
+            const newConfig = { ...sectionsByGrade, [newGradeName]: [] };
+
+            try {
+                await setDoc(configDocRef, newConfig);
+                document.getElementById('new-grade-name').value = '';
+                showToast(`Pathway "${newGradeName}" generated.`, 'success');
+            } catch (error) {
+                console.error("Add grade error:", error);
+                showToast("Failed to create grade path.", 'error');
+            }
+        }
+
+        async function handleAddSection(event) {
+            event.preventDefault();
+            const parentBlock = event.target.closest('.p-4');
+            const gradeName = parentBlock.querySelector('.font-bold').textContent.trim();
+            const input = event.target.querySelector('input');
+            const newSectionName = input.value.trim();
+            if (!newSectionName) return;
+
+            const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'grades-and-sections');
+            const updatedSectionsList = [...(sectionsByGrade[gradeName] || []), newSectionName];
+            
+            try {
+                await updateDoc(configDocRef, { [gradeName]: updatedSectionsList });
+                input.value = '';
+                showToast(`Section "${newSectionName}" created in ${gradeName}.`, 'success');
+            } catch (error) {
+                console.error("Add section crash:", error);
+                showToast("Cloud write failed during section expansion.", 'error');
+            }
+        }
+
+        async function handleRemoveGrade(event) {
+            const gradeToRemove = event.target.dataset.grade;
+            if (!confirm(`Warning: Deleting pathway "${gradeToRemove}" will clear all classroom associations. Proceed?`)) return;
+
+            const newConfig = { ...sectionsByGrade };
+            delete newConfig[gradeToRemove];
+
+            const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'grades-and-sections');
+            try {
+                await setDoc(configDocRef, newConfig);
+                showToast(`Pathway "${gradeToRemove}" completely removed.`, 'success');
+            } catch (error) {
+                console.error("Remove grade crash:", error);
+                showToast("Deletion fault occurred in cloud config.", 'error');
+            }
+        }
+
+        async function handleRemoveSection(event) {
+            const btn = event.target.closest('.remove-section-btn');
+            const grade = btn.dataset.grade;
+            const sectionToRemove = btn.dataset.section;
+            
+            if (!confirm(`Are you sure you want to remove section "${sectionToRemove}"?`)) return;
+
+            const updatedSections = (sectionsByGrade[grade] || []).filter(s => s !== sectionToRemove);
+            
+            const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'grades-and-sections');
+            try {
+                await updateDoc(configDocRef, { [grade]: updatedSections });
+                showToast(`Section "${sectionToRemove}" purged.`, 'success');
+            } catch (error) {
+                console.error("Remove section crash:", error);
+                showToast("Fault removing section reference.", 'error');
+            }
+        }
+
+        async function handleSaveSchedules(event) {
+            event.preventDefault();
+            toggleLoading(true);
+
+            const payload = {};
+            gradeLevels.forEach(grade => {
+                const container = Array.from(scheduleInputsContainer.children).find(el => {
+                    return el.querySelector('.sched-start')?.dataset.grade === grade;
+                });
+                if (container) {
+                    const startVal = container.querySelector('.sched-start').value;
+                    const hasEndVal = container.querySelector('.sched-has-end').checked;
+                    const endVal = container.querySelector('.sched-end').value;
+
+                    payload[grade] = {
+                        start: startVal,
+                        hasEnd: hasEndVal,
+                        end: hasEndVal ? endVal : ''
+                    };
+                }
+            });
+
+            try {
+                const schedDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'schedule');
+                await setDoc(schedDocRef, payload);
+                showToast("Timing schedules successfully updated.", 'success');
+            } catch (err) {
+                console.error(err);
+                showToast("Timing database write failed.", 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function handleExportCsv() {
+            toggleLoading(true);
+            try {
+                const submissionsCollectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'submissions');
+                const querySnapshot = await getDocs(submissionsCollectionRef);
+                
+                const submissions = [];
+                querySnapshot.forEach(doc => {
+                    submissions.push(doc.data());
+                });
+
+                if (submissions.length === 0) {
+                    showToast("No enrollment entries found to compile.", 'error');
+                    toggleLoading(false);
+                    return;
+                }
+
+                const headers = ["lastName", "firstName", "middleInitial", "grade", "section", "clubName", "timestamp"];
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += headers.map(header => `"${header}"`).join(",") + "\n";
+
+                submissions.forEach(sub => {
+                    const row = headers.map(header => {
+                        let value = '';
+                        if (header === 'timestamp') {
+                            value = new Date(sub.timestamp.seconds * 1000).toLocaleString();
+                        } else if (header === 'clubName') {
+                             value = clubsData[sub.clubId]?.name || sub.clubId;
+                        } else {
+                            value = sub[header] || '';
+                        }
+                        return `"${value.toString().replace(/"/g, '""')}"`;
+                    }).join(",");
+                    csvContent += row + "\n";
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `mcu_club_enrollments_${new Date().toISOString().slice(0,10)}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showToast("Database spreadsheet compiled successfully.", 'success');
+            } catch (error) {
+                console.error("Export failure:", error);
+                showToast("Spreadsheet formulation aborted.", 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function handleDeleteSubmission(submissionId) {
+            if (!confirm(`Permanently drop this student reservation from database?`)) return;
+
+            toggleLoading(true);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const submissionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
+                    const submissionDoc = await transaction.get(submissionDocRef);
+
+                    if (!submissionDoc.exists()) {
+                        throw new Error("Target reservation footprint is missing.");
+                    }
+
+                    const data = submissionDoc.data();
+                    const clubId = data.clubId;
+                    const grade = data.grade;
+                    const section = data.section;
+
+                    if (clubId && clubsData[clubId]) {
+                        const clubDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'clubs', clubId);
+                        const clubDoc = await transaction.get(clubDocRef);
+                        
+                        if (clubDoc.exists()) {
+                            const clubData = clubDoc.data();
+                            if (clubData.grades?.[grade]) {
+                                const currentCount = parseInt(clubData.grades[grade].count || 0);
+                                transaction.update(clubDocRef, { [`grades.${grade}.count`]: Math.max(0, currentCount - 1) });
+                            }
+                            const secKey = `${grade}_${section}`;
+                            if (clubData.sections?.[secKey]) {
+                                const currentCount = parseInt(clubData.sections[secKey].count || 0);
+                                transaction.update(clubDocRef, { [`sections.${secKey}.count`]: Math.max(0, currentCount - 1) });
+                            }
+                        }
+                    }
+                    
+                    transaction.delete(submissionDocRef);
+                });
+                showToast("Reservation record purged.", 'success');
+            } catch (error) {
+                console.error("Drop sequence exception:", error);
+                showToast(error.message || "Failed to finalize database purge.", 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        function handleEditSubmission(submissionId) {
+            currentSubmissionToEdit = submissionsData[submissionId];
+            if (!currentSubmissionToEdit) return;
+
+            editStudentInfoDiv.innerHTML = `
+                <p class="font-bold text-gray-800">${currentSubmissionToEdit.firstName} ${currentSubmissionToEdit.middleInitial ? currentSubmissionToEdit.middleInitial + '.' : ''} ${currentSubmissionToEdit.lastName}</p>
+                <p class="text-xs text-gray-500 font-semibold">${currentSubmissionToEdit.grade} | ${currentSubmissionToEdit.section}</p>
+                <p class="text-[var(--primary-color)] text-xs font-bold mt-1">Primary Placement: ${clubsData[currentSubmissionToEdit.clubId]?.name || 'Unassigned'}</p>
+            `;
+
+            editClubSelect.innerHTML = '<option value="" disabled>-- Transfer student to --</option>';
+            const availableClubs = Object.values(clubsData).sort((a, b) => a.name.localeCompare(b.name));
+            
+            availableClubs.forEach(club => {
+                const clubId = sanitizeString(club.name);
+                const option = document.createElement('option');
+                option.value = clubId;
+                option.textContent = club.name;
+                if (clubId === currentSubmissionToEdit.clubId) {
+                    option.selected = true;
+                }
+                editClubSelect.appendChild(option);
+            });
+            editSubmissionModal.style.display = 'flex';
+        }
+
+        async function handleEditClubSubmit(event) {
+            event.preventDefault();
+            const newClubId = editClubSelect.value;
+            const oldClubId = currentSubmissionToEdit.clubId;
+            const grade = currentSubmissionToEdit.grade;
+            const section = currentSubmissionToEdit.section;
+            const submissionId = currentSubmissionToEdit.id;
+
+            if (newClubId === oldClubId) {
+                showToast("No transition executed. Choice is identical.", 'error');
+                editSubmissionModal.style.display = 'none';
+                return;
+            }
+
+            toggleLoading(true);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const newClubDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'clubs', newClubId);
+                    const oldClubDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'clubs', oldClubId);
+                    const submissionDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'submissions', submissionId);
+
+                    const newClubDoc = await transaction.get(newClubDocRef);
+                    const oldClubDoc = await transaction.get(oldClubDocRef);
+
+                    if (!newClubDoc.exists() || !oldClubDoc.exists()) {
+                        throw new Error("Required club entity targets are incomplete.");
+                    }
+
+                    const newClubData = newClubDoc.data();
+                    const oldClubData = oldClubDoc.data();
+
+                    // 1. Decrement old placements
+                    if (oldClubData.grades?.[grade]) {
+                        const oldCnt = parseInt(oldClubData.grades[grade].count || 0);
+                        transaction.update(oldClubDocRef, { [`grades.${grade}.count`]: Math.max(0, oldCnt - 1) });
+                    }
+                    const oldSecKey = `${grade}_${section}`;
+                    if (oldClubData.sections?.[oldSecKey]) {
+                        const oldCnt = parseInt(oldClubData.sections[oldSecKey].count || 0);
+                        transaction.update(oldClubDocRef, { [`sections.${oldSecKey}.count`]: Math.max(0, oldCnt - 1) });
+                    }
+
+                    // 2. Increment new target allocations
+                    if (newClubData.grades?.[grade]) {
+                        const newCnt = parseInt(newClubData.grades[grade].count || 0);
+                        transaction.update(newClubDocRef, { [`grades.${grade}.count`]: newCnt + 1 });
+                    }
+                    const newSecKey = `${grade}_${section}`;
+                    if (newClubData.sections?.[newSecKey]) {
+                        const newCnt = parseInt(newClubData.sections[newSecKey].count || 0);
+                        transaction.update(newClubDocRef, { [`sections.${newSecKey}.count`]: newCnt + 1 });
+                    }
+
+                    // 3. Update active submission record
+                    transaction.update(submissionDocRef, { clubId: newClubId });
+                });
+
+                showToast("Transferred student successfully.", 'success');
+                editSubmissionModal.style.display = 'none';
+                currentSubmissionToEdit = null;
+            } catch (error) {
+                console.error("Error shifting profiles:", error);
+                showToast(error.message || "Failed to transfer student.", 'error');
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        // --- Setup Missing Event Listeners ---
+        function setupEventListeners() {
+            signupForm.addEventListener('submit', handleFormSubmit);
+            
+            confirmSubmitBtn.addEventListener('click', handleConfirmSubmit);
+            cancelConfirmBtn.addEventListener('click', () => {
+                confirmationModal.style.display = 'none';
+            });
+
+            gradeSelect.addEventListener('change', () => {
+                populateSections();
+                renderClubButtons();
+            });
+            sectionSelect.addEventListener('change', renderClubButtons);
+
+            closeMessageModalBtn.addEventListener('click', () => {
+                messageModal.style.display = 'none';
+            });
+
+            // Administrative Console Bindings
+            adminLoginBtn.addEventListener('click', () => {
+                adminModal.style.display = 'flex';
+                adminLoginForm.classList.remove('hidden');
+                adminPanelContent.classList.add('hidden');
+                document.getElementById('admin-password').value = '';
+            });
+            closeAdminModalBtn.addEventListener('click', () => {
+                adminModal.style.display = 'none';
+            });
+
+            adminLoginForm.addEventListener('submit', handleAdminLogin);
+
+            // Tab Navigation Controls
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetTabId = btn.dataset.target;
+                    
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    ['tab-submissions', 'tab-clubs', 'tab-schedule', 'tab-structure'].forEach(tabId => {
+                        const panel = document.getElementById(tabId);
+                        if (tabId === targetTabId) {
+                            panel.classList.remove('hidden');
+                        } else {
+                            panel.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            searchStudentInput.addEventListener('input', renderSubmittedReports);
+            exportCsvBtn.addEventListener('click', handleExportCsv);
+
+            document.querySelectorAll('input[name="slot-basis"]').forEach(radio => {
+                radio.addEventListener('change', handleSlotBasisChange);
+            });
+
+            addClubForm.addEventListener('submit', handleAddClub);
+            
+            document.getElementById('reset-club-form-btn').addEventListener('click', () => {
+                addClubForm.reset();
+                document.getElementById('add-club-form-title').textContent = "Create New Extracurricular Club";
+                renderAdminCapacityInputs();
+            });
+
+            scheduleConfigForm.addEventListener('submit', handleSaveSchedules);
+            addGradeForm.addEventListener('submit', handleAddGrade);
+
+            closeEditModalBtn.addEventListener('click', () => {
+                editSubmissionModal.style.display = 'none';
+            });
+            editClubForm.addEventListener('submit', handleEditClubSubmit);
+        }
+
+        // --- Run Application ---
+        initializeFirebase();
+    </script>
+</body>
+</html>
