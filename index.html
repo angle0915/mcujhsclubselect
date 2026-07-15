@@ -1087,12 +1087,13 @@
             const settingsDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'configuration', 'settings');
             onSnapshot(settingsDocRef, (docSnap) => {
                 const data = docSnap.data();
-                if (data && data.slotBasis) {
-                    slotBasis = data.slotBasis;
-                } else {
-                    setDoc(settingsDocRef, { slotBasis: 'grade' }, { merge: true });
-                    slotBasis = 'grade';
-                }
+if (data && data.slotBasis) {
+    slotBasis = data.slotBasis;
+} else {
+    // Overwrite the fallback default to use sections
+    setDoc(settingsDocRef, { slotBasis: 'section' }, { merge: true }); 
+    slotBasis = 'section'; 
+}
 
                 const activeLabel = slotBasis === 'grade' ? 'basis-grade-label' : 'basis-section-label';
                 const inactiveLabel = slotBasis === 'grade' ? 'basis-section-label' : 'basis-grade-label';
